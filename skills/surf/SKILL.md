@@ -68,7 +68,7 @@ surf gemini "analyze" --file data.csv             # Attach file
 surf gemini "a robot surfing" --generate-image /tmp/robot.png
 surf gemini "add sunglasses" --edit-image photo.jpg --output out.jpg
 surf gemini "summarize" --youtube "https://youtube.com/..."
-surf gemini "hello" --model gemini-2.5-flash      # Models: gemini-3-pro (default), gemini-2.5-pro, gemini-2.5-flash
+surf gemini "hello" --model gemini-3.5-flash      # Models: gemini-3.1-pro (default), gemini-3.5-flash, gemini-3.1-flash-lite
 surf gemini "wide banner" --generate-image /tmp/banner.png --aspect-ratio 16:9
 ```
 

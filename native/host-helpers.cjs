@@ -1081,7 +1081,7 @@ function mapToolToMessage(tool, args, tabId) {
       return {
         type: "GEMINI_QUERY",
         query: a.query,
-        model: a.model || "gemini-3-pro",
+        model: a.model || "gemini-3.1-pro",
         withPage: a["with-page"],
         file: a.file,
         generateImage: a["generate-image"],

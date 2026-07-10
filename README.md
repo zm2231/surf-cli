@@ -377,7 +377,7 @@ surf gemini "analyze" --file data.csv                         # Attach file
 surf gemini "a robot surfing" --generate-image /tmp/robot.png # Generate image
 surf gemini "add sunglasses" --edit-image photo.jpg --output out.jpg
 surf gemini "summarize" --youtube "https://youtube.com/..."   # YouTube analysis
-surf gemini "hello" --model gemini-2.5-flash                  # Model selection
+surf gemini "hello" --model gemini-3.5-flash                  # Model selection
 
 # Perplexity
 surf perplexity "what is quantum computing"

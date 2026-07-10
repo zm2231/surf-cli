@@ -22,7 +22,7 @@ describe("gemini-client", () => {
 
       const run = geminiClient.runGeminiWebViaPage({
         prompt: "generate a test image",
-        model: "gemini-3-pro",
+        model: "gemini-3.1-pro",
         timeoutMs: 10_000,
         log: (msg: string) => logs.push(msg),
         createTab: async () => ({ tabId: 123 }),
@@ -102,7 +102,7 @@ describe("gemini-client", () => {
 
       const run = geminiClient.runGeminiWebViaPage({
         prompt: "generate a new image",
-        model: "gemini-3-pro",
+        model: "gemini-3.1-pro",
         timeoutMs: 10_000,
         createTab: async () => ({ tabId: 123 }),
         closeTab: async () => ({ ok: true }),
@@ -155,7 +155,7 @@ describe("gemini-client", () => {
 
       const run = geminiClient.runGeminiWebViaPage({
         prompt: "generate a test image",
-        model: "gemini-3-pro",
+        model: "gemini-3.1-pro",
         timeoutMs: 10_000,
         createTab: async () => ({ tabId: 123 }),
         closeTab: async () => ({ ok: true }),

@@ -405,7 +405,7 @@ const TOOLS = {
         args: ["query"],
         opts: {
           "with-page": "Include current page context",
-          model: "Model: gemini-3-pro (default), gemini-2.5-pro, gemini-2.5-flash",
+          model: "Model: gemini-3.1-pro (default), gemini-3.5-flash, gemini-3.1-flash-lite",
           file: "Attach file to analyze",
           "generate-image": "Generate image and save to path",
           "edit-image": "Edit existing image (use with --output)",
@@ -2907,6 +2907,14 @@ if (tool === "gemini") {
   }
   if (toolArgs.file && typeof toolArgs.file === "string") {
     toolArgs.file = path.resolve(toolArgs.file);
+  }
+  if (toolArgs.model) {
+    const known = ["gemini-3.1-pro", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
+    if (!known.includes(toolArgs.model)) {
+      process.stderr.write(
+        `warning: unknown Gemini model "${toolArgs.model}"; using "gemini-3.1-pro". Available: ${known.join(", ")}\n`,
+      );
+    }
   }
 }
 if (tool === "chatgpt" && toolArgs.file) {

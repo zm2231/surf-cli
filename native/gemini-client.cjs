@@ -22,9 +22,9 @@ const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 
 const MODEL_HEADER_NAME = "x-goog-ext-525001261-jspb";
 const MODEL_HEADERS = {
-  "gemini-3-pro": '[1,null,null,null,"9d8ca3786ebdfbea",null,null,0,[4]]',
-  "gemini-2.5-pro": '[1,null,null,null,"4af6c7f5da75d65d",null,null,0,[4]]',
-  "gemini-2.5-flash": '[1,null,null,null,"9ec249fc9ad08861",null,null,0,[4]]',
+  "gemini-3.1-pro": '[1,null,null,null,"e6fa609c3fa255c0",null,null,0,[4]]',
+  "gemini-3.5-flash": '[1,null,null,null,"56fdd199312815e2",null,null,0,[4]]',
+  "gemini-3.1-flash-lite": '[1,null,null,null,"8c46e95b1a07cecc",null,null,0,[4]]',
 };
 
 const REQUIRED_COOKIES = ["__Secure-1PSID", "__Secure-1PSIDTS"];
@@ -543,7 +543,7 @@ async function runGeminiWebOnce(input) {
     "referer": "https://gemini.google.com/",
     "x-same-domain": "1",
     "cookie": cookieHeader,
-    [MODEL_HEADER_NAME]: MODEL_HEADERS[model] || MODEL_HEADERS["gemini-3-pro"],
+    [MODEL_HEADER_NAME]: MODEL_HEADERS[model] || MODEL_HEADERS["gemini-3.1-pro"],
   }, params.toString(), { timeoutMs, log, label: "geminiStreamGenerate" });
 
   const rawResponseText = res.text;
@@ -594,9 +594,9 @@ async function runGeminiWebWithFallback(input) {
   const attempt = await runGeminiWebOnce(input);
   
   // Auto-fallback to flash if model unavailable
-  if (isModelUnavailable(attempt.errorCode) && input.model !== "gemini-2.5-flash") {
-    const fallback = await runGeminiWebOnce({ ...input, model: "gemini-2.5-flash" });
-    return { ...fallback, effectiveModel: "gemini-2.5-flash" };
+  if (isModelUnavailable(attempt.errorCode) && input.model !== "gemini-3.5-flash") {
+    const fallback = await runGeminiWebOnce({ ...input, model: "gemini-3.5-flash" });
+    return { ...fallback, effectiveModel: "gemini-3.5-flash" };
   }
   
   return { ...attempt, effectiveModel: input.model };
@@ -846,7 +846,13 @@ async function query(options) {
   log(`Got ${Object.keys(cookieMap).length} Gemini cookies`);
 
   // 2. Resolve model
-  const resolvedModel = MODEL_HEADERS[model] ? model : "gemini-3-pro";
+  let resolvedModel;
+  if (MODEL_HEADERS[model]) {
+    resolvedModel = model;
+  } else {
+    resolvedModel = "gemini-3.1-pro";
+    log(`Unknown Gemini model "${model}"; using "${resolvedModel}"`);
+  }
 
   // 3. Build prompt
   let fullPrompt = prompt || "";
