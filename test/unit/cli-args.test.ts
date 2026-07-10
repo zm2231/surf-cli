@@ -239,6 +239,13 @@ describe("CLI argument parsing", () => {
     expect(request.params.args).toMatchObject({ id: 123, "to-window": 456, index: 0 });
   });
 
+  it("preserves page.read max-bytes", async () => {
+    const { request } = await runCli(["page.read", "--compact", "--max-bytes", "1200"]);
+
+    expect(request.params.tool).toBe("page.read");
+    expect(request.params.args).toMatchObject({ compact: true, "max-bytes": 1200 });
+  });
+
   it("does not map emulate.viewport positional values to width and height", async () => {
     const { request } = await runCli(["emulate.viewport", "375", "812"]);
 

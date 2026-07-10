@@ -1258,16 +1258,28 @@ function setFormValue(ref: string, value: string | boolean | number): { success:
   }
 }
 
-function getPageText(): { text: string; title: string; url: string; error?: string } {
+function truncateToUtf8Bytes(input: string, maxBytes: number): string {
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(input);
+  if (encoded.length <= maxBytes) return input;
+  let end = maxBytes;
+  while (end > 0 && (encoded[end] & 0xc0) === 0x80) end--;
+  return new TextDecoder("utf-8", { fatal: false }).decode(encoded.subarray(0, end));
+}
+
+function getPageText(options: { compact?: boolean; maxBytes?: number } = {}): { text: string; title: string; url: string; error?: string } {
   try {
     const article = document.querySelector("article");
     const main = document.querySelector("main");
     const content = article || main || document.body;
+    const maxBytes = Number.isFinite(options.maxBytes) && options.maxBytes! > 0
+      ? options.maxBytes!
+      : 50000;
 
-    const text = content.textContent
+    const normalized = content.textContent
       ?.replace(/\s+/g, " ")
-      .trim()
-      .substring(0, 50000) || "";
+      .trim() || "";
+    const text = truncateToUtf8Bytes(normalized, maxBytes);
 
     return {
       text,
@@ -1467,7 +1479,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     }
     case "GET_PAGE_TEXT": {
-      const result = getPageText();
+      const result = getPageText(message.options || {});
       sendResponse(result);
       break;
     }

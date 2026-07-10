@@ -122,6 +122,7 @@ describe("accessibility tree", () => {
     (globalThis as any).window = {
       innerWidth: 1024,
       innerHeight: 768,
+      location: { href: "https://example.test/page" },
       getComputedStyle: () => ({
         display: "block",
         visibility: "visible",
@@ -132,6 +133,7 @@ describe("accessibility tree", () => {
 
     (globalThis as any).document = {
       body: new FakeElement("body"),
+      title: "Example",
       getElementById: () => null,
       querySelector: () => null,
       querySelectorAll: () => [],
@@ -175,5 +177,55 @@ describe("accessibility tree", () => {
     expect(response.error).toBeUndefined();
     expect(response.pageContent).toContain('link "Read docs"');
     expect(response.pageContent).toContain('button "Save changes"');
+  });
+
+  it("caps visible text in compact mode", () => {
+    (document.body as unknown as FakeElement).append(text("abcdef"));
+
+    let response: any;
+    messageHandler?.(
+      { type: "GET_PAGE_TEXT", options: { compact: true, maxBytes: 3 } },
+      {},
+      (result) => {
+        response = result;
+      },
+    );
+
+    expect(response).toMatchObject({
+      text: "abc",
+      title: "Example",
+      url: "https://example.test/page",
+    });
+  });
+
+  it("does not truncate compact text when max-bytes is not given", () => {
+    const long = "a".repeat(5000);
+    (document.body as unknown as FakeElement).append(text(long));
+
+    let response: any;
+    messageHandler?.({ type: "GET_PAGE_TEXT", options: { compact: true } }, {}, (result) => {
+      response = result;
+    });
+
+    expect(response.text.length).toBe(5000);
+  });
+
+  it("truncates multi-byte utf-8 text on a byte boundary, not a surrogate", () => {
+    (document.body as unknown as FakeElement).append(text("😀😀"));
+
+    let response: any;
+    messageHandler?.(
+      { type: "GET_PAGE_TEXT", options: { compact: true, maxBytes: 3 } },
+      {},
+      (result) => {
+        response = result;
+      },
+    );
+
+    expect(response.text).not.toContain("\uD83D");
+    expect(response.text).not.toContain("\uDE00");
+    const byteLen = new TextEncoder().encode(response.text).length;
+    expect(byteLen).toBeLessThanOrEqual(3);
+    expect(response.text).toBe("");
   });
 });

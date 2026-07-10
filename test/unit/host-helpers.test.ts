@@ -130,6 +130,39 @@ describe("mapToolToMessage", () => {
     });
   });
 
+  describe("page.read command", () => {
+    it("maps compact max-bytes to READ_PAGE options", () => {
+      const msg = helpers.mapToolToMessage("page.read", {
+        compact: true,
+        "max-bytes": "1200",
+        depth: "2",
+      });
+      expect(msg).toMatchObject({
+        type: "READ_PAGE",
+        options: {
+          compact: true,
+          maxBytes: 1200,
+          depth: 2,
+          forceFullSnapshot: true,
+        },
+      });
+    });
+
+    it("throws when max-bytes is not a positive integer", () => {
+      for (const bad of ["abc", "0", "-5", "12abc", "1.5", " ", ""]) {
+        expect(() => helpers.mapToolToMessage("page.read", { "max-bytes": bad })).toThrow(
+          /max-bytes must be a positive integer/,
+        );
+      }
+    });
+
+    it("accepts a valid positive integer max-bytes", () => {
+      const msg = helpers.mapToolToMessage("page.read", { "max-bytes": "1200" });
+      expect(msg.options.maxBytes).toBe(1200);
+      expect(msg.options.forceFullSnapshot).toBe(true);
+    });
+  });
+
   describe("screenshot commands", () => {
     it("maps full-page to fullpage", () => {
       const msg = helpers.mapToolToMessage("screenshot", { "full-page": true });

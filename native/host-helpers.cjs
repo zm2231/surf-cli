@@ -896,18 +896,32 @@ function mapToolToMessage(tool, args, tabId) {
     case "upload":
       const files = a.files ? (typeof a.files === "string" ? a.files.split(",").map(f => f.trim()) : a.files) : [];
       return { type: "UPLOAD_FILE", ref: a.ref, files, ...baseMsg };
-    case "page.read":
-      return { 
-        type: "READ_PAGE", 
-        options: { 
-          filter: a.filter || "interactive", 
-          refId: a.ref, 
+    case "page.read": {
+      let maxBytes;
+      if (a["max-bytes"] !== undefined) {
+        const raw = String(a["max-bytes"]).trim();
+        if (!/^\d+$/.test(raw) || raw === "0") {
+          throw new Error("max-bytes must be a positive integer");
+        }
+        maxBytes = parseInt(raw, 10);
+        if (!Number.isFinite(maxBytes) || maxBytes <= 0) {
+          throw new Error("max-bytes must be a positive integer");
+        }
+      }
+      return {
+        type: "READ_PAGE",
+        options: {
+          filter: a.filter || "interactive",
+          refId: a.ref,
           includeText: a["no-text"] !== true,
           depth: a.depth !== undefined ? parseInt(a.depth, 10) : undefined,
           compact: a.compact || false,
-        }, 
-        ...baseMsg 
+          maxBytes,
+          forceFullSnapshot: a.compact === true || maxBytes !== undefined,
+        },
+        ...baseMsg
       };
+    }
     case "page.text":
       return { type: "GET_PAGE_TEXT", ...baseMsg };
     case "page.state":

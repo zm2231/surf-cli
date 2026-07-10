@@ -681,6 +681,7 @@ const TOOLS = {
           "no-text": "Exclude visible text content",
           depth: "Maximum tree depth (default: unlimited)",
           compact: "Remove empty structural elements",
+          "max-bytes": "Maximum visible text bytes",
         },
         examples: [
           { cmd: "page.read", desc: "Interactive elements + text content" },
@@ -688,7 +689,7 @@ const TOOLS = {
           { cmd: "page.read --no-text", desc: "Interactive elements only (no text)" },
           { cmd: "page.read --depth 3", desc: "Limit to 3 levels deep" },
           { cmd: "page.read --compact", desc: "Skip empty containers" },
-          { cmd: "page.read --depth 3 --compact", desc: "Shallow + compact (60% smaller)" },
+          { cmd: "page.read --depth 3 --compact --max-bytes 2000", desc: "Shallow + compact output" },
           { cmd: "read", desc: "Alias" },
         ]
       },
