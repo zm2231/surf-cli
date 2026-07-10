@@ -798,6 +798,12 @@ function mapToolToMessage(tool, args, tabId) {
       }
       return { type: "CLOSE_TAB", tabId: id, tabIds: ids };
     }
+    case "tab.move": {
+      const id = a.id || a.tab_id || a.tabId;
+      const ids = a.ids || a.tab_ids || a.tabIds;
+      const windowId = a["to-window"] || a.toWindow || a.window_id || a.windowId;
+      return { type: "TAB_MOVE", tabId: id, tabIds: ids, windowId, index: a.index };
+    }
     case "tab.name":
       return { type: "TABS_REGISTER", name: a.name, ...baseMsg };
     case "tab.unname":

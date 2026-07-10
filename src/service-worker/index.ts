@@ -2643,6 +2643,37 @@ export async function handleMessage(
       return { success: true, closed: tabIds };
     }
 
+    case "TAB_MOVE": {
+      const rawTabIds = message.tabIds || (message.tabId ? [message.tabId] : []);
+      const tabIds = (Array.isArray(rawTabIds) ? rawTabIds : String(rawTabIds).split(","))
+        .map((id) => Number(id));
+      if (tabIds.length === 0) throw new Error("No tabId(s) provided");
+      if (tabIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+        throw new Error("Invalid tabId(s)");
+      }
+
+      const windowId = Number(message.windowId);
+      if (!Number.isInteger(windowId) || windowId <= 0) {
+        throw new Error("No destination windowId provided");
+      }
+
+      const index = message.index !== undefined ? Number(message.index) : -1;
+      if (!Number.isInteger(index) || index < -1) throw new Error("Invalid tab index");
+
+      const moveProperties = { windowId, index };
+      const movedTabs = tabIds.length === 1
+        ? await chrome.tabs.move(tabIds[0], moveProperties)
+        : await chrome.tabs.move(tabIds, moveProperties);
+
+      return {
+        success: true,
+        moved: tabIds,
+        destinationWindowId: windowId,
+        index,
+        tabs: Array.isArray(movedTabs) ? movedTabs : [movedTabs],
+      };
+    }
+
     case "TABS_REGISTER": {
       let targetTabId = tabId;
       if (!targetTabId) {
@@ -3546,7 +3577,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 const COMMANDS_WITHOUT_TAB = new Set([
-  "LIST_TABS", "NEW_TAB", "TABS_NEW", "CLOSE_TABS", "SWITCH_TAB", "TABS_SWITCH",
+  "LIST_TABS", "NEW_TAB", "TABS_NEW", "CLOSE_TABS", "TAB_MOVE", "SWITCH_TAB", "TABS_SWITCH",
   "TABS_REGISTER", "TABS_UNREGISTER", "TABS_LIST_NAMED", "TABS_GET_BY_NAME",
   "CREATE_TAB_GROUP", "UNGROUP_TABS", "LIST_TAB_GROUPS", "GET_HISTORY", "SEARCH_HISTORY",
   "GET_COOKIES", "SET_COOKIE", "DELETE_COOKIES", "GET_BOOKMARKS", "ADD_BOOKMARK", 

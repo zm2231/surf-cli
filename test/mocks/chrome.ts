@@ -21,6 +21,7 @@ type ChromeMock = {
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    move: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
     sendMessage: ReturnType<typeof vi.fn>;
     onUpdated: {
@@ -119,6 +120,7 @@ export function createChromeMock(): ChromeMock {
       get: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({ id: 1 }),
       update: vi.fn().mockResolvedValue({}),
+      move: vi.fn().mockResolvedValue({}),
       remove: vi.fn().mockResolvedValue(undefined),
       sendMessage: vi.fn().mockResolvedValue(undefined),
       onUpdated: {

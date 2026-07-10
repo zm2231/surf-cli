@@ -90,6 +90,20 @@ describe("mapToolToMessage", () => {
       expect(msg.type).toBe("NEW_TAB");
       expect(msg.url).toBe("https://example.com");
     });
+
+    it("maps tab.move to TAB_MOVE", () => {
+      const msg = helpers.mapToolToMessage("tab.move", {
+        id: "123",
+        "to-window": "456",
+        index: "0",
+      });
+      expect(msg).toMatchObject({
+        type: "TAB_MOVE",
+        tabId: "123",
+        windowId: "456",
+        index: "0",
+      });
+    });
   });
 
   describe("aistudio commands", () => {

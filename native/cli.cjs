@@ -528,6 +528,12 @@ const TOOLS = {
         opts: { ids: "Close multiple tabs" },
         examples: [{ cmd: "tab.close 123", desc: "Close tab" }]
       },
+      "tab.move": {
+        desc: "Move tab to another window",
+        args: ["id"],
+        opts: { ids: "Move multiple tabs", "to-window": "Destination window ID", index: "Destination index" },
+        examples: [{ cmd: "tab.move 123 --to-window 456", desc: "Move tab to window" }]
+      },
       "tab.name": {
         desc: "Register current tab with a name",
         args: ["name"],
@@ -1567,7 +1573,7 @@ const ALL_SOCKET_TOOLS = [
   "computer",
   "page.read", "page.text", "page.state",
   "locate.role", "locate.text", "locate.label",
-  "tab.list", "tab.new", "tab.switch", "tab.close", "tab.name", "tab.unname", "tab.named",
+  "tab.list", "tab.new", "tab.switch", "tab.close", "tab.move", "tab.name", "tab.unname", "tab.named",
   "tab.group", "tab.ungroup", "tab.groups", "tab.reload",
   "scroll.top", "scroll.bottom", "scroll.to", "scroll.info",
   "wait.element", "wait.network", "wait.url", "wait.dom", "wait.load",
@@ -2732,6 +2738,7 @@ const PRIMARY_ARG_MAP = {
   "tab.switch": "id",
   close_tab: "tab_id",
   "tab.close": "id",
+  "tab.move": "id",
   "tab.name": "name",
   "tab.unname": "name",
   scroll_to_position: "position",

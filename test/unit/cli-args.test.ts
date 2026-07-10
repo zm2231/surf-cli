@@ -232,6 +232,13 @@ describe("CLI argument parsing", () => {
     expect(request.params.args.level).toBe(1.5);
   });
 
+  it("maps tab.move positional tab id and destination window", async () => {
+    const { request } = await runCli(["tab.move", "123", "--to-window", "456", "--index", "0"]);
+
+    expect(request.params.tool).toBe("tab.move");
+    expect(request.params.args).toMatchObject({ id: 123, "to-window": 456, index: 0 });
+  });
+
   it("does not map emulate.viewport positional values to width and height", async () => {
     const { request } = await runCli(["emulate.viewport", "375", "812"]);
 
