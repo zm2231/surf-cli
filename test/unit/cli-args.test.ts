@@ -225,6 +225,13 @@ describe("CLI argument parsing", () => {
     expect(request.params.args).toMatchObject({ width: 375, height: 812 });
   });
 
+  it("preserves zoom level flags", async () => {
+    const { request } = await runCli(["zoom", "--level", "1.5"]);
+
+    expect(request.params.tool).toBe("zoom");
+    expect(request.params.args.level).toBe(1.5);
+  });
+
   it("does not map emulate.viewport positional values to width and height", async () => {
     const { request } = await runCli(["emulate.viewport", "375", "812"]);
 

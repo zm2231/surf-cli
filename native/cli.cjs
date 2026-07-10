@@ -2946,7 +2946,9 @@ const streamMode = toolArgs.stream === true;
 delete toolArgs.stream;
 
 const streamLevel = toolArgs.level;
-delete toolArgs.level;
+if (tool === "console" || tool === "network") {
+  delete toolArgs.level;
+}
 
 const streamFilter = toolArgs.filter;
 delete toolArgs.filter;

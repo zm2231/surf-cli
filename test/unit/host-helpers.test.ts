@@ -208,6 +208,13 @@ describe("mapToolToMessage", () => {
     });
   });
 
+  describe("zoom command", () => {
+    it("maps zoom level to ZOOM_SET", () => {
+      const msg = helpers.mapToolToMessage("zoom", { level: "1.5" }, 123);
+      expect(msg).toMatchObject({ type: "ZOOM_SET", level: 1.5, tabId: 123 });
+    });
+  });
+
   describe("scroll commands", () => {
     it("maps direction and amount flags to scroll deltas", () => {
       const msg = helpers.mapToolToMessage("scroll", { direction: "down", amount: 4 }, 123);
