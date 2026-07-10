@@ -471,11 +471,16 @@ function mapComputerAction(args, tabId) {
       if (ref) return { type: "CLICK_REF", ref, button: "triple", ...baseMsg };
       return { type: "EXECUTE_TRIPLE_CLICK", x: coordinate?.[0], y: coordinate?.[1], modifiers, ...baseMsg };
     
-    case "type":
+    case "type": {
       if (ref) {
         return { type: "FORM_FILL", data: [{ ref, value: text }], ...baseMsg };
       }
+      const typeSelector = a.selector || a.into;
+      if (typeSelector) {
+        return { type: "SMART_TYPE", selector: typeSelector, text, clear: a.clear ?? true, submit: a.submit ?? false, ...baseMsg };
+      }
       return { type: "EXECUTE_TYPE", text, ...baseMsg };
+    }
     
     case "key": {
       const keyValue = a.key || text;

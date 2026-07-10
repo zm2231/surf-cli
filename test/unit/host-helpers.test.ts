@@ -163,6 +163,47 @@ describe("mapToolToMessage", () => {
     });
   });
 
+  describe("type command", () => {
+    it("routes a selector target to SMART_TYPE", () => {
+      const msg = helpers.mapToolToMessage("type", { text: "hello", selector: "#i" });
+      expect(msg.type).toBe("SMART_TYPE");
+      expect(msg.selector).toBe("#i");
+      expect(msg.text).toBe("hello");
+      expect(msg.clear).toBe(true);
+      expect(msg.submit).toBe(false);
+    });
+
+    it("routes an --into target to SMART_TYPE without CLI normalization", () => {
+      const msg = helpers.mapToolToMessage("type", { text: "hello", into: "#target" });
+      expect(msg.type).toBe("SMART_TYPE");
+      expect(msg.selector).toBe("#target");
+    });
+
+    it("honors submit and clear flags on a selector target", () => {
+      const msg = helpers.mapToolToMessage("type", {
+        text: "hello",
+        selector: "#i",
+        clear: false,
+        submit: true,
+      });
+      expect(msg.type).toBe("SMART_TYPE");
+      expect(msg.clear).toBe(false);
+      expect(msg.submit).toBe(true);
+    });
+
+    it("uses FORM_FILL for a ref target", () => {
+      const msg = helpers.mapToolToMessage("type", { text: "hello", ref: "e1" });
+      expect(msg.type).toBe("FORM_FILL");
+      expect(msg.data).toEqual([{ ref: "e1", value: "hello" }]);
+    });
+
+    it("falls back to cursor typing with no target", () => {
+      const msg = helpers.mapToolToMessage("type", { text: "hello" });
+      expect(msg.type).toBe("EXECUTE_TYPE");
+      expect(msg.text).toBe("hello");
+    });
+  });
+
   describe("screenshot commands", () => {
     it("maps full-page to fullpage", () => {
       const msg = helpers.mapToolToMessage("screenshot", { "full-page": true });
