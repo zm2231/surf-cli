@@ -2644,10 +2644,26 @@ export async function handleMessage(
     }
 
     case "TABS_REGISTER": {
-      if (!tabId) throw new Error("No tabId provided");
+      let targetTabId = tabId;
+      if (!targetTabId) {
+        const isRestricted = (url?: string) =>
+          !url || url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url === 'about:blank';
+        const queryOptions: chrome.tabs.QueryInfo = message.windowId
+          ? { active: true, windowId: message.windowId }
+          : { active: true, lastFocusedWindow: true };
+        const [activeTab] = await chrome.tabs.query(queryOptions);
+        if (activeTab && !isRestricted(activeTab.url)) {
+          targetTabId = activeTab.id;
+        } else {
+          throw new Error(
+            "Cannot register a chrome:// or extension tab. Focus a regular web page, or pass an explicit tabId."
+          );
+        }
+      }
+      if (!targetTabId) throw new Error("No active tab found");
       if (!message.name) throw new Error("No name provided");
-      tabNameRegistry.set(message.name, tabId);
-      return { success: true, name: message.name, tabId };
+      tabNameRegistry.set(message.name, targetTabId);
+      return { success: true, name: message.name, tabId: targetTabId };
     }
 
     case "TABS_GET_BY_NAME": {
