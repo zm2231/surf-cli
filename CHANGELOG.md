@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added
-- **Deep X Research skill** - Added `skills/deep-x-research/`, an agent skill that layers an exhaustive X (Twitter) research procedure on top of surf: multi-angle keyword sweeps in Latest and Top modes, semantic passes via `surf grok`, a video-analysis pass, categorized findings, and a References section where every cited post carries its full post URL.
+- **Deep X Research skill** - Added `skills/deep-x-research/`, an agent skill that layers an exhaustive X (Twitter) research procedure on top of `surf grok`: a quota-budgeted multi-angle Grok sweep (keyword + semantic, with DeepSearch), Grok-native video analysis, quota-free URL verification via direct post opens, categorized findings, and a References section where every cited post carries its full post URL. Falls back to the x.com search UI when the Grok quota is exhausted.
 
 ### Docs
 - **Skills README** - Documented the two-skill layout (`surf/` reference, `deep-x-research/` procedure) with install steps for Pi, Claude Code, and Codex, and pointed the surf skill's Grok section at `deep-x-research` for exhaustive research tasks.
