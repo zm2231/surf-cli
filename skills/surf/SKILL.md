@@ -160,6 +160,7 @@ surf tab.list
 surf tab.new "https://google.com"
 surf tab.switch 12345
 surf tab.close 12345
+surf tab.move 12345 --to-window 67890
 surf tab.reload                # Reload current tab
 
 # Named tabs (aliases)
@@ -209,12 +210,13 @@ Use `window.new`, `--window-id`, `--tab-id`, and named tabs to keep parallel age
 ## Input Methods
 
 ```bash
-# CDP method (real events) - default
+# CDP method (real events) types at the current focus
 surf type --text "hello"
 surf click --x 100 --y 200
 
-# JS method (DOM manipulation) - for contenteditable
-surf type --text "hello" --selector "#input" --method js
+# Selector/ref targets use frame-aware DOM input
+surf type "hello" --into "#input"
+surf type "hello" --ref e5
 
 # Keys
 surf key Enter
@@ -235,6 +237,7 @@ surf animate-audit --selector ".thing" --duration 2000 --fps 10  # JSON animatio
 surf page.read --ref e5        # Get specific element details
 surf page.read --depth 3       # Limit tree depth
 surf page.read --compact       # Minimal output for LLM efficiency
+surf page.read --max-bytes 2000 # Cap visible text at a UTF-8 byte boundary
 surf page.text                 # Plain text content only
 surf page.state                # Modals, loading state, scroll info
 ```

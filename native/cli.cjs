@@ -830,7 +830,7 @@ const TOOLS = {
           ref: "Element ref (uses JS DOM method, more reliable for modals)",
           submit: "Press enter after",
           clear: "Clear first",
-          method: "cdp|js (default: cdp, but ref uses JS automatically)"
+          method: "cdp|js (cursor typing uses CDP; selector/ref targets use JS)"
         },
         examples: [
           { cmd: 'type "hello world"', desc: "Type at cursor (CDP events)" },
@@ -2964,11 +2964,15 @@ delete toolArgs.filter;
 let finalTool = tool;
 if (methodFlag === "js") {
   if (tool === "type") {
-    if (!toolArgs.selector) {
-      console.error("Error: --selector or --into required for type with --method js");
-      process.exit(1);
+    if (toolArgs.ref) {
+      finalTool = "type";
+    } else {
+      if (!toolArgs.selector) {
+        console.error("Error: --selector, --into, or --ref required for type with --method js");
+        process.exit(1);
+      }
+      finalTool = "smart_type";
     }
-    finalTool = "smart_type";
   } else if (tool === "click") {
     if (!toolArgs.selector) {
       console.error("Error: --selector required for click with --method js");
@@ -2979,8 +2983,13 @@ if (methodFlag === "js") {
     finalTool = "js";
   }
 } else if (methodFlag === "cdp") {
+  if (tool === "type" && (toolArgs.selector || toolArgs.ref)) {
+    console.error("Error: --method cdp types at the current focus and cannot be combined with --into, --selector, or --ref");
+    process.exit(1);
+  }
   if (tool === "smart_type") {
-    finalTool = "type";
+    console.error("Error: smart_type uses the JS input path and cannot be combined with --method cdp");
+    process.exit(1);
   }
 }
 

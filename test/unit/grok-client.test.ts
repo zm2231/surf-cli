@@ -309,6 +309,35 @@ pong`,
         ),
       ).resolves.toMatchObject({ text: "pong" });
     });
+
+    it("does not complete from a stale thinking marker while the current response is still changing", async () => {
+      let calls = 0;
+      const result = await grokClient.waitForResponse(
+        async () => {
+          calls++;
+          const currentText = calls < 3 ? "p" : "pong";
+          return {
+            result: {
+              value: {
+                bodyText: `Thought for 4s\nreply with one word\n${currentText}`,
+                responseText: `reply with one word\n${currentText}`,
+                bodyLength: 50 + currentText.length,
+                hasStopBtn: false,
+                thinkingDone: true,
+                thinkingSecs: 4,
+                isThinking: calls < 3,
+                url: "https://x.com/i/grok",
+              },
+            },
+          };
+        },
+        5000,
+        "reply with one word",
+      );
+
+      expect(result.text).toBe("pong");
+      expect(calls).toBe(3);
+    });
   });
 
   describe("getGrokModels", () => {

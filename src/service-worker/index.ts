@@ -16,6 +16,11 @@ function getFrameIdForTab(tabId: number): number {
   return frameContexts.get(tabId) ?? 0;
 }
 
+function isRestrictedTabUrl(url?: string): boolean {
+  if (!url) return true;
+  return /^(?:about|arc|brave|chrome|chrome-extension|devtools|edge|extension|helium|moz-extension):/i.test(url);
+}
+
 const screenshotCache = new Map<string, { base64: string; width: number; height: number }>();
 let screenshotCounter = 0;
 
@@ -778,54 +783,18 @@ export async function handleMessage(
       const { selector, text, clear = true, submit = false } = message;
       if (!selector) throw new Error("selector required");
       if (text === undefined) throw new Error("text required");
-      
-      const script = `(() => {
-        const el = document.querySelector(${JSON.stringify(selector)});
-        if (!el) return { error: 'Element not found: ' + ${JSON.stringify(selector)} };
-        
-        const isContentEditable = el.isContentEditable || 
-                                   el.getAttribute('contenteditable') === 'true';
-        const hasContentEditableChild = el.querySelector('[contenteditable="true"]');
-        
-        const target = hasContentEditableChild || el;
-        const useContentEditable = isContentEditable || !!hasContentEditableChild;
-        
-        target.focus();
-        
-        if (${clear}) {
-          if (useContentEditable) {
-            target.textContent = '';
-          } else {
-            target.value = '';
-          }
-        }
-        
-        if (useContentEditable) {
-          target.textContent = ${JSON.stringify(text)};
-        } else {
-          target.value = ${JSON.stringify(text)};
-        }
-        
-        target.dispatchEvent(new Event('input', { bubbles: true }));
-        target.dispatchEvent(new Event('change', { bubbles: true }));
-        
-        if (${submit}) {
-          const form = el.closest('form');
-          const submitBtn = document.querySelector('button[type="submit"], button[data-testid*="send"], button[aria-label*="Send"]');
-          if (submitBtn) {
-            submitBtn.click();
-          } else if (form) {
-            form.dispatchEvent(new Event('submit', { bubbles: true }));
-          } else {
-            target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
-          }
-        }
-        
-        return { success: true, contentEditable: useContentEditable };
-      })()`;
-      
-      const result = await cdp.evaluateScript(tabId, script);
-      return result.result?.value || { error: "Script failed" };
+
+      try {
+        return await chrome.tabs.sendMessage(tabId, {
+          type: "SMART_TYPE",
+          selector,
+          text,
+          clear,
+          submit,
+        }, { frameId: getFrameIdForTab(tabId) });
+      } catch (err) {
+        throw new Error(`Could not type into selector: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
 
     case "CLOSE_DIALOGS": {
@@ -2683,17 +2652,15 @@ export async function handleMessage(
     case "TABS_REGISTER": {
       let targetTabId = tabId;
       if (!targetTabId) {
-        const isRestricted = (url?: string) =>
-          !url || url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url === 'about:blank';
         const queryOptions: chrome.tabs.QueryInfo = message.windowId
           ? { active: true, windowId: message.windowId }
           : { active: true, lastFocusedWindow: true };
         const [activeTab] = await chrome.tabs.query(queryOptions);
-        if (activeTab && !isRestricted(activeTab.url)) {
+        if (activeTab && !isRestrictedTabUrl(activeTab.url)) {
           targetTabId = activeTab.id;
         } else {
           throw new Error(
-            "Cannot register a chrome:// or extension tab. Focus a regular web page, or pass an explicit tabId."
+            "Cannot register a restricted browser or extension page. Focus a regular web page, or pass an explicit tabId."
           );
         }
       }
@@ -3622,13 +3589,10 @@ initNativeMessaging(async (msg) => {
       tab = tabs[0];
       
       // Check if active tab is usable (not a restricted URL)
-      const isRestricted = (url?: string) => 
-        !url || url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url === 'about:blank';
-      
-      if (!tab || isRestricted(tab.url)) {
+      if (!tab || isRestrictedTabUrl(tab.url)) {
         // Active tab is restricted, find any usable tab in the window
         tabs = await chrome.tabs.query({ windowId });
-        tab = tabs.find(t => !isRestricted(t.url));
+        tab = tabs.find(t => !isRestrictedTabUrl(t.url));
       }
       
       if (!tab?.id) {
@@ -3650,13 +3614,13 @@ initNativeMessaging(async (msg) => {
       // Default behavior: find active tab across windows
       tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
       tab = tabs[0];
-      if (!tab || tab.url?.startsWith('chrome-extension://')) {
+      if (!tab || isRestrictedTabUrl(tab.url)) {
         tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         tab = tabs[0];
       }
-      if (!tab || tab.url?.startsWith('chrome-extension://') || tab.url?.startsWith('chrome://')) {
+      if (!tab || isRestrictedTabUrl(tab.url)) {
         tabs = await chrome.tabs.query({ active: true });
-        tab = tabs.find(t => !t.url?.startsWith('chrome-extension://') && !t.url?.startsWith('chrome://'));
+        tab = tabs.find(t => !isRestrictedTabUrl(t.url));
       }
       if (!tab?.id) {
         throw new Error("No active tab found. Use 'surf tab.new <url>' to create one, or 'surf tab.list' to see available tabs.");

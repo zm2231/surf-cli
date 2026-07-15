@@ -23,6 +23,9 @@ class FakeElement extends FakeNode {
   disabled = false;
   indeterminate = false;
   checked = false;
+  focused = false;
+  clicked = false;
+  isContentEditable = false;
 
   private attrs = new Map<string, string>();
 
@@ -78,6 +81,18 @@ class FakeElement extends FakeNode {
 
   querySelector(): FakeElement | null {
     return null;
+  }
+
+  focus(): void {
+    this.focused = true;
+  }
+
+  click(): void {
+    this.clicked = true;
+  }
+
+  dispatchEvent(): boolean {
+    return true;
   }
 
   getBoundingClientRect(): { top: number; bottom: number; left: number; right: number } {
@@ -198,8 +213,8 @@ describe("accessibility tree", () => {
     });
   });
 
-  it("does not truncate compact text when max-bytes is not given", () => {
-    const long = "a".repeat(5000);
+  it("preserves the existing 50000-character default when max-bytes is not given", () => {
+    const long = "😀".repeat(30000);
     (document.body as unknown as FakeElement).append(text(long));
 
     let response: any;
@@ -207,7 +222,26 @@ describe("accessibility tree", () => {
       response = result;
     });
 
-    expect(response.text.length).toBe(5000);
+    expect(response.text.length).toBe(50000);
+    expect(new TextEncoder().encode(response.text).length).toBe(100000);
+  });
+
+  it("types into a selector in the content-script frame", () => {
+    const input = new FakeInputElement("input");
+    (document as any).querySelector = (selector: string) => (selector === "#target" ? input : null);
+
+    let response: any;
+    messageHandler?.(
+      { type: "SMART_TYPE", selector: "#target", text: "hello", clear: true, submit: false },
+      {},
+      (result) => {
+        response = result;
+      },
+    );
+
+    expect(input.focused).toBe(true);
+    expect(input.value).toBe("hello");
+    expect(response).toEqual({ success: true, contentEditable: false });
   });
 
   it("truncates multi-byte utf-8 text on a byte boundary, not a surrogate", () => {

@@ -31,16 +31,59 @@ describe("tab handlers", () => {
     expect(result).toEqual({ success: true, name: "work", tabId: 123 });
   });
 
-  it("rejects registration when the active tab is chrome:// or extension URL", async () => {
+  it.each([
+    "chrome://settings/",
+    "edge://settings/",
+    "brave://settings/",
+    "arc://settings/",
+    "helium://settings/",
+    "chrome-extension://abc/page.html",
+    "about:blank",
+  ])("rejects registration for restricted URL %s", async (url) => {
     const handleMessage = await loadHandleMessage();
     const chrome = (globalThis as any).chrome;
-    chrome.tabs.query.mockResolvedValue([
-      { id: 999, url: "chrome://settings/", active: true, windowId: 1 },
-    ]);
+    chrome.tabs.query.mockResolvedValue([{ id: 999, url, active: true, windowId: 1 }]);
 
     await expect(handleMessage({ type: "TABS_REGISTER", name: "settings" }, {})).rejects.toThrow(
-      /chrome:\/\/ or extension tab/,
+      /restricted browser or extension page/,
     );
+  });
+
+  it("routes selector typing to the selected iframe", async () => {
+    const handleMessage = await loadHandleMessage();
+    const chrome = (globalThis as any).chrome;
+    chrome.webNavigation.getAllFrames.mockResolvedValue([
+      { frameId: 0, parentFrameId: -1, url: "https://example.com/" },
+      { frameId: 7, parentFrameId: 0, url: "https://example.com/frame" },
+    ]);
+
+    await handleMessage({ type: "FRAME_SWITCH", tabId: 123, index: 0 }, {});
+    chrome.tabs.sendMessage.mockResolvedValue({ success: true, contentEditable: false });
+
+    const result = await handleMessage(
+      {
+        type: "SMART_TYPE",
+        tabId: 123,
+        selector: "#card-number",
+        text: "4242",
+        clear: true,
+        submit: false,
+      },
+      {},
+    );
+
+    expect(chrome.tabs.sendMessage).toHaveBeenLastCalledWith(
+      123,
+      {
+        type: "SMART_TYPE",
+        selector: "#card-number",
+        text: "4242",
+        clear: true,
+        submit: false,
+      },
+      { frameId: 7 },
+    );
+    expect(result).toEqual({ success: true, contentEditable: false });
   });
 
   it("moves tabs to the destination window", async () => {

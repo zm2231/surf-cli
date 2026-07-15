@@ -47,6 +47,7 @@ type ChromeMock = {
     };
   };
   webNavigation: {
+    getAllFrames: ReturnType<typeof vi.fn>;
     onCompleted: {
       addListener: ReturnType<typeof vi.fn>;
       removeListener: ReturnType<typeof vi.fn>;
@@ -146,6 +147,7 @@ export function createChromeMock(): ChromeMock {
       },
     },
     webNavigation: {
+      getAllFrames: vi.fn().mockResolvedValue([]),
       onCompleted: {
         addListener: vi.fn(),
         removeListener: vi.fn(),

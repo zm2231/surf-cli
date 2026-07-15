@@ -556,17 +556,6 @@ async function waitForResponse(cdp, timeoutMs = 300000, userPrompt = '') {
       // Check for stop/cancel button (indicates still generating)
       const hasStopBtn = !!document.querySelector('button[aria-label*="Stop"], button[aria-label*="stop"], button[aria-label*="Cancel"]');
 
-      // Check for "Thought for Xs" which indicates thinking model completed thinking
-      const thinkMatch = bodyText.match(/Thought for (\\d+)s/i);
-      const thinkingDone = !!thinkMatch;
-      const thinkingSecs = thinkMatch ? parseInt(thinkMatch[1], 10) : null;
-
-      // Check if actively showing "thinking..." or similar loading state
-      const isThinking = /\\bthinking\\.\\.\\./i.test(bodyText) ||
-                         /\\bSearching\\.\\.\\./i.test(bodyText) ||
-                         bodyText.includes('Grok is thinking') ||
-                         bodyText.includes('is thinking...');
-
       // Try to find the actual Grok response in the DOM
       // Look for the main content area - Grok responses appear in the conversation area
       let responseText = '';
@@ -599,6 +588,16 @@ async function waitForResponse(cdp, timeoutMs = 300000, userPrompt = '') {
         responseText = responseRoot.innerText || bodyText;
         preciseRoot = false;
       }
+
+      // Completion state must come from the current response container. Page-wide markers can belong to an earlier turn and would make a new short response finish prematurely.
+      const currentStateText = preciseRoot && responseRoot ? (responseRoot.innerText || '') : '';
+      const thinkMatch = currentStateText.match(/Thought for (\\d+)s/i);
+      const thinkingDone = !!thinkMatch;
+      const thinkingSecs = thinkMatch ? parseInt(thinkMatch[1], 10) : null;
+      const isThinking = /\\bthinking\\.\\.\\./i.test(currentStateText) ||
+                         /\\bSearching\\.\\.\\./i.test(currentStateText) ||
+                         currentStateText.includes('Grok is thinking') ||
+                         currentStateText.includes('is thinking...');
 
       // Suggestion chips are the no-testid/no-aria-label buttons inside the response container. Only collect them from a precise container: a broad main/body fallback holds unrelated buttons that could erase a matching answer line.
       const chipTexts = (preciseRoot && responseRoot ? Array.from(responseRoot.querySelectorAll('button')) : [])
@@ -669,7 +668,7 @@ async function waitForResponse(cdp, timeoutMs = 300000, userPrompt = '') {
     }
 
     const stableMs = Date.now() - lastChangeAt;
-    const noStopButton = !snapshot.hasStopBtn;
+    const noStopButton = !snapshot.hasStopBtn && !snapshot.isThinking;
 
     // Response is stable if the extracted response text hasn't changed
     // Use shorter thresholds since we're checking actual content, not noisy body text

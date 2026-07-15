@@ -246,6 +246,42 @@ describe("CLI argument parsing", () => {
     expect(request.params.args).toMatchObject({ compact: true, "max-bytes": 1200 });
   });
 
+  it("rejects explicit CDP typing with selector targets", async () => {
+    const { code, stderr } = await runCliWithoutSocket([
+      "type",
+      "hello",
+      "--into",
+      "#target",
+      "--method",
+      "cdp",
+    ]);
+
+    expect(code).toBe(1);
+    expect(stderr).toContain("--method cdp types at the current focus");
+  });
+
+  it("rejects explicit CDP method on smart_type", async () => {
+    const { code, stderr } = await runCliWithoutSocket([
+      "smart_type",
+      "--selector",
+      "#target",
+      "--text",
+      "hello",
+      "--method",
+      "cdp",
+    ]);
+
+    expect(code).toBe(1);
+    expect(stderr).toContain("smart_type uses the JS input path");
+  });
+
+  it("keeps ref typing on the frame-aware form path with --method js", async () => {
+    const { request } = await runCli(["type", "hello", "--ref", "e1", "--method", "js"]);
+
+    expect(request.params.tool).toBe("type");
+    expect(request.params.args).toMatchObject({ text: "hello", ref: "e1" });
+  });
+
   it("does not map emulate.viewport positional values to width and height", async () => {
     const { request } = await runCli(["emulate.viewport", "375", "812"]);
 
